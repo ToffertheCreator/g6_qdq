@@ -136,17 +136,37 @@ html, body {
     color: #fff;
 }
 
-.intro-tagline {
-    letter-spacing: 24px;
+.intro-title {
     display: block;
     margin-top: 0px;
+    margin-bottom: 10px;
     text-align: center;
     white-space: normal;
     word-break: break-all;
     line-height: 1;
     max-width: 95vw;
-    letter-spacing: clamp(2px, 1vw, 24px);
-    font-size: clamp(2.3rem, 7.5vw, 3.4rem);
+    letter-spacing: clamp(4px, 1vw, 30px);
+    font-size: clamp(2.3rem, 7.5vw, 4rem);
+}
+
+.intro-subtitle {
+    color: #fff;
+    text-align: center;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    font-size: 2rem;
+    opacity: 1;
+    letter-spacing: clamp(4px, 1vw, 30px);
+}
+
+.intro-tagline {
+    color: #fff;
+    text-align: center;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    font-size: 1.5rem;
+    opacity: 0.6;
+    letter-spacing: clamp(4px, 1vw, 30px);
 }
 
 /* .intro-logo-top {
