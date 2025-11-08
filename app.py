@@ -22,14 +22,10 @@ def q():
     message = ""
     removed_message = ""
 
-    # Initialize queue session
     if request.method == 'GET':
         session['queue_data'] = []
         session['message'] = ""
         session['removed_message'] = ""
-
-    if 'queue_data' not in session:
-        session['queue_data'] = []
 
     # Rebuild queue from session data
     my_queue = queue.Queue()
@@ -37,21 +33,20 @@ def q():
         my_queue.enqueue(item)
 
     if request.method == 'POST':
-        data = request.form.get('inputdata', '').strip()
         operation = request.form.get('operation')
+        data = request.form.get('inputdata')
 
         if operation == 'enqueue' and data:
             my_queue.enqueue(data)
+            message = f"Added {data} to queue"
+            session['queue_data'] = my_queue.display()
         elif operation == 'dequeue':
-            removed = my_queue.dequeue()
-            removed_message = f"Dequeued: {removed}" if removed else "Queue is empty."
-
-        # Save updated queue state
-        session['queue_data'] = my_queue.display()
-        session.modified = True
-    else:
-        message = session.get('message', '')
-        removed_message = session.get('removed_message', '')
+            if my_queue.display():
+                removed_item = my_queue.dequeue()
+                removed_message = f"Removed {removed_item} from queue"
+                session['queue_data'] = my_queue.display()
+            else:
+                message = "Queue is empty"
 
     queue_items = my_queue.display()
     return render_template('queue.html', queue_items=queue_items, message=message, removed_message=removed_message)

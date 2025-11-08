@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<title>Profile Page</title>
+{% endblock %}
+
+{% block body %}
+<div class="page-bg">
+    <div class="profile-section">
+        <h1>MEET THE TEAM</h1>
+        <div class="profile-cards">
+            <div class="profile-card">
+                <div class="profile-image">
+                    <img src="{{ url_for('static', filename='me.jpg') }}" alt="literally me">
+                </div>
+                <h2>KRISTOPHER MOLINA</h2>
+                <p class="course">DSA BSCPE 2-3</p>
+                <p class="tagline">MY BACK HURTS</p>
+                <blockquote class="profile-quote">
+                    MY FAVORITE CONSPIRACY THEORY IS THAT EVERYTHING'S GONNA BE ALRIGHT
+                </blockquote>
+            </div>
+
+            <div class="profile-card">
+                <div class="profile-image">
+                    <img src="{{ url_for('static', filename='peter.jpg') }}" alt="literally me">
+                </div>
+                <h2>ZACH NATHAN DESACULA</h2>
+                <p class="course">DSA BSCPE 2-3</p>
+                <p class="tagline">-----</p>
+                <blockquote class="profile-quote">
+                    -------
+                </blockquote>
+            </div>
+
+            <div class="profile-card">
+                <div class="profile-image">
+                    <img src="{{ url_for('static', filename='sigma.jpg') }}" alt="literally me">
+                </div>
+                <h2>JAN ALFER JAO</h2>
+                <p class="course">DSA BSCPE 2-3</p>
+                <p class="tagline">-----</p>
+                <blockquote class="profile-quote">
+                    -------
+                </blockquote>
+            </div>
+
+            <div class="profile-card">
+                <div class="profile-image">
+                    <img src="{{ url_for('static', filename='drake.jpg') }}" alt="literally me">
+                </div>
+                <h2>JOWEH CANINDO</h2>
+                <p class="course">DSA BSCPE 2-3</p>
+                <p class="tagline">-----</p>
+                <blockquote class="profile-quote">
+                    -------
+                </blockquote>
+            </div>
+
+            <div class="profile-card">
+                <div class="profile-image">
+                    <img src="{{ url_for('static', filename='razzie.jpg') }}" alt="literally me">
+                </div>
+                <h2>DAVID ANTONIO</h2>
+                <p class="course">DSA BSCPE 2-3</p>
+                <p class="tagline">-----</p>
+                <blockquote class="profile-quote">
+                    -------
+                </blockquote>
+            </div>
+            <div class="profile-card">
+                <div class="profile-image">
+                    <img src="{{ url_for('static', filename='dingdong.jpg') }}" alt="literally me">
+                </div>
+                <h2>DENVER SAYASAYA</h2>
+                <p class="course">DSA BSCPE 2-3</p>
+                <p class="tagline">-----</p>
+                <blockquote class="profile-quote">
+                    -------
+                </blockquote>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<title>Queue</title>
+{% endblock %}
+
+{% block body %}
+<div class="works page-bg">
+    <div class="work-detail-section">
+        <h1>QUEUE</h1>
+        <div class="io-box">
+            <form action="/q" method="post">
+                <div class="container">
+                    <div id="data-field">
+                        <label for="inputdata">Enter Data</label>
+                        <input type="text" id="inputdata" name="inputdata" value="{{ request.form.inputdata }}">
+                    </div>
+                    <div class="operation-field">
+                        <label for="operation">Operation</label>
+                        <select name="operation" id="operation" onchange="toggleIndexInput()">
+                            <option value="enqueue" {% if request.form.get('operation') == 'enqueue' %}selected{% endif %}>Enqueue</option>
+                            <option value="dequeue" {% if request.form.get('operation') == 'dequeue' %}selected{% endif %}>Dequeue</option>
+                        </select>
+                    </div>
+                </div>
+                <input type="submit" value="Execute" style="margin-top: 10px;">
+            </form>
+
+            <div class="list-display">
+                <h3>Queue:</h3>
+                <p id="listDisplay">
+                    {% if queue_items %}
+                        {{ queue_items|join(' → ') }}
+                    {% else %}
+                        Empty
+                    {% endif %}
+                </p>
+                {% if message %}
+                    <p class="message">{{ message }}</p>
+                {% endif %}
+                {% if removed_message %}
+                    <p class="removed_message">{{ removed_message }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    function toggleIndexInput() {
+        const operation = document.getElementById('operation').value;
+        const dataField = document.getElementById('data-field');
+        if (operation === 'dequeue') {
+            dataField.style.display = 'none'
+        } else {
+            dataField.style.display = 'block'
+        }
+    }
+    document.addEventListener('DOMContentLoaded', toggleIndexInput);
+</script>
+{% endblock %}

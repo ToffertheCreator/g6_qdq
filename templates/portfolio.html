@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<title>Portfolio Page</title>
+{% endblock %}
+
+{% block body %}
+<div class="page-bg">
+    <div class="portfolio-section">
+        <h1>OUR PROGRAMMING WORKS</h1>
+        <div class="portfolio-cards">
+            <div class="work-card">
+                <h3>Queue</h3>
+                <p>Visualize how a queue works by adding elements at the rear and removing them from the front in FIFO order.</p>
+                <a href="{{ url_for('q') }}" class="try-link">Try it</a>
+            </div>
+            
+            <div class="work-card">
+                <h3>Deque</h3>
+                <p>Demonstrates how a deque lets you add or remove elements from both ends of the structure.</p>
+                <a href="{{ url_for('dq') }}" class="try-link">Try it</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
