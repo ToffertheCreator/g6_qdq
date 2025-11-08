@@ -1,3 +1,3 @@
 # Group 6 DSA
 
-> live view:
+> live view: https://g6qdq.vercel.app/
