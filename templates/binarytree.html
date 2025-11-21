@@ -1,0 +1,229 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<title>Binary Tree</title>
+{% endblock %}
+
+{% block body %}
+<div class="works page-bg">
+    <div class="work-detail-section">
+        <h1>BINARY TREE</h1>
+        <div class="io-box">
+            <form action="/tree" method="post">
+                <div class="container">
+                    <div id="data-field">
+                        <label for="value">Enter Value</label>
+                        <input type="text" id="value" name="value" value="{{ request.form.value }}">
+                    </div>
+                    <div class="operation-field">
+                        <label for="operation">Operation</label>
+                        <select name="operation" id="operation" onchange="toggleStartingNode(); toggleInputFields();">
+                            <option value="insert_left" {% if request.form.get('operation') == 'insert_left' %}selected{% endif %}>Insert Left</option>
+                            <option value="insert_right" {% if request.form.get('operation') == 'insert_right' %}selected{% endif %}>Insert Right</option>
+                            <option value="delete" {% if request.form.get('operation') == 'delete' %}selected{% endif %}>Delete</option>
+                            <option value="search" {% if request.form.get('operation') == 'search' %}selected{% endif %}>Search</option>
+                            <option value="preorder_traversal" {% if request.form.get('operation') == 'preorder_traversal' %}selected{% endif %}>Pre-order Traversal</option>
+                            <option value="inorder_traversal" {% if request.form.get('operation') == 'inorder_traversal' %}selected{% endif %}>In-order Traversal</option>
+                            <option value="postorder_traversal" {% if request.form.get('operation') == 'postorder_traversal' %}selected{% endif %}>Post-order Traversal</option>
+                        </select>
+                    </div>
+                    <div class="operation-field" id="starting-node-field" style="display: none;">
+                        <label for="starting_node">Starting Node (optional)</label>
+                        <input type="text" id="starting_node" name="starting_node" placeholder="Leave empty for root">
+                    </div>
+                </div>
+                <input type="submit" value="Execute" style="margin-top: 10px;">
+            </form>
+
+            {% if message %}
+                <p class="message">{{ message }}</p>
+            {% endif %}
+            {% if search_result %}
+                {% if "Not Found" in search_result %}
+                    <p class="message-error">{{ search_result }}</p>
+                {% else %}
+                    <p class="message-success">{{ search_result }}</p>
+                {% endif %}
+            {% endif %}
+            {% if traversal_result %}
+                <p class="traversal_result">{{ traversal_result }}</p>
+            {% endif %}
+
+            <!-- Tree Visualization -->
+            <div class="tree-container" id="treeCanvas">
+                <canvas id="tree-canvas" 
+                    data-tree='{% if tree %}{{ tree | tojson | safe }}{% else %}""{% endif %}'></canvas>
+                <p id="empty-note" class="empty-tree-note">Tree is empty. Insert values to visualize.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function toggleStartingNode() {
+        const operation = document.getElementById('operation').value;
+        const startingNodeField = document.getElementById('starting-node-field');
+        if (operation === 'insert_left' || operation === 'insert_right') {
+            startingNodeField.style.display = 'block';
+        } else {
+            startingNodeField.style.display = 'none';
+        }
+    }
+    document.addEventListener('DOMContentLoaded', toggleStartingNode);
+
+    function toggleInputFields() {
+        const operation = document.getElementById('operation').value;
+        const dataField = document.getElementById('data-field');
+        const startingNodeField = document.getElementById('starting-node-field');
+        if (operation === 'preorder_traversal' || operation === 'inorder_traversal' || operation === 'postorder_traversal') {
+            dataField.style.display = 'none'
+            startingNodeField.style.display = 'none'
+        } else {
+            dataField.style.display = 'block'
+        }
+    }
+    document.addEventListener('DOMContentLoaded', toggleInputFields);
+
+    // Draw tree visualization with zoom and pan
+    (function drawTreeIfAny() {
+        var canvas = document.getElementById('tree-canvas');
+        if (!canvas) return;
+        var data = canvas.getAttribute('data-tree');
+        if (!data || data === '""') {
+            document.getElementById('empty-note').style.display = 'block';
+            return;
+        }
+
+        try {
+            var treeData = JSON.parse(data);
+        } catch (e) {
+            console.error('Invalid tree JSON', e);
+            return;
+        }
+
+        var container = document.getElementById('treeCanvas');
+        var emptyNote = document.getElementById('empty-note');
+        if (emptyNote) emptyNote.style.display = 'none';
+
+        var ctx = canvas.getContext('2d');
+        var nodeRadius = 25;
+        var levelHeight = 100;
+        var minNodeSpacing = 80;
+
+        var zoom = 1;
+        var panX = 0;
+        var panY = 0;
+        var isDragging = false;
+        var dragStart = { x: 0, y: 0 };
+
+        function getTreeDepth(node) {
+            if (!node) return 0;
+            return 1 + Math.max(getTreeDepth(node.left), getTreeDepth(node.right));
+        }
+
+        function getTreeWidth(node, depth) {
+            if (!node) return 0;
+            if (depth === 1) return 1;
+            return getTreeWidth(node.left, depth - 1) + getTreeWidth(node.right, depth - 1);
+        }
+
+        var depth = getTreeDepth(treeData);
+        var maxWidth = getTreeWidth(treeData, depth);
+        var requiredCanvasWidth = maxWidth * minNodeSpacing + 100;
+        var requiredHeight = (depth * levelHeight) + 100;
+
+        canvas.width = Math.max(container.offsetWidth, requiredCanvasWidth);
+        canvas.height = Math.max(600, requiredHeight);
+
+        function drawNode(node, x, y, horizontalSpacing) {
+            if (!node) return;
+
+            if (node.left) {
+                var leftX = x - horizontalSpacing;
+                var leftY = y + levelHeight;
+                ctx.beginPath();
+                ctx.moveTo(x, y + nodeRadius);
+                ctx.lineTo(leftX, leftY - nodeRadius);
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                drawNode(node.left, leftX, leftY, horizontalSpacing / 2);
+            }
+
+            if (node.right) {
+                var rightX = x + horizontalSpacing;
+                var rightY = y + levelHeight;
+                ctx.beginPath();
+                ctx.moveTo(x, y + nodeRadius);
+                ctx.lineTo(rightX, rightY - nodeRadius);
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                drawNode(node.right, rightX, rightY, horizontalSpacing / 2);
+            }
+
+            ctx.beginPath();
+            ctx.arc(x, y, nodeRadius, 0, 2 * Math.PI);
+            ctx.fillStyle = '#151515';
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(node.value, x, y);
+        }
+
+        function redraw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.save();
+            
+            ctx.translate(canvas.width / 2, 0);
+            ctx.scale(zoom, zoom);
+            ctx.translate(-canvas.width / 2 + panX, panY);
+            
+            var initialSpacing = canvas.width / 4;
+            drawNode(treeData, canvas.width / 2, 60, initialSpacing);
+            
+            ctx.restore();
+        }
+
+        canvas.addEventListener('wheel', function(e) {
+            e.preventDefault();
+            var zoomSpeed = 0.1;
+            var newZoom = zoom + (e.deltaY > 0 ? -zoomSpeed : zoomSpeed);
+            zoom = Math.max(0.5, Math.min(newZoom, 3));
+            redraw();
+        });
+
+        canvas.addEventListener('mousedown', function(e) {
+            isDragging = true;
+            dragStart = { x: e.offsetX, y: e.offsetY };
+        });
+
+        canvas.addEventListener('mousemove', function(e) {
+            if (isDragging) {
+                var deltaX = (e.offsetX - dragStart.x) / zoom;
+                var deltaY = (e.offsetY - dragStart.y) / zoom;
+                panX += deltaX;
+                panY += deltaY;
+                dragStart = { x: e.offsetX, y: e.offsetY };
+                redraw();
+            }
+        });
+
+        canvas.addEventListener('mouseup', function() {
+            isDragging = false;
+        });
+
+        canvas.addEventListener('mouseleave', function() {
+            isDragging = false;
+        });
+
+        redraw();
+    })();
+</script>
+{% endblock %}
