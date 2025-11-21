@@ -112,6 +112,18 @@ def tree():
         operation = request.form.get('operation')
         value = request.form.get('value', '').strip()
         starting_node_value = request.form.get('starting_node', '').strip()
+        action = request.form.get('action')
+
+        # Handle clear action
+        if action == 'clear':
+            session['tree'] = None
+            session.modified = True
+            message = "Tree cleared successfully"
+            return render_template('binarytree.html', tree=None, message=message)
+        
+        operation = request.form.get('operation')
+        value = request.form.get('value', '').strip()
+        starting_node_value = request.form.get('starting_node', '').strip()
 
         # Handle insertions
         if (operation == 'insert_left' or operation == 'insert_right') and value:
