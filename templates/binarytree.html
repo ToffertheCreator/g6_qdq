@@ -118,6 +118,7 @@
         var panY = 0;
         var isDragging = false;
         var dragStart = { x: 0, y: 0 };
+        var lastDistance = 0;
 
         function getTreeDepth(node) {
             if (!node) return 0;
@@ -194,6 +195,7 @@
             ctx.restore();
         }
 
+        // Mouse wheel zoom
         canvas.addEventListener('wheel', function(e) {
             e.preventDefault();
             var zoomSpeed = 0.1;
@@ -202,6 +204,7 @@
             redraw();
         });
 
+        // Mouse drag pan
         canvas.addEventListener('mousedown', function(e) {
             isDragging = true;
             dragStart = { x: e.offsetX, y: e.offsetY };
@@ -224,6 +227,47 @@
 
         canvas.addEventListener('mouseleave', function() {
             isDragging = false;
+        });
+
+        // Touch events for mobile
+        canvas.addEventListener('touchstart', function(e) {
+            if (e.touches.length === 1) {
+                isDragging = true;
+                dragStart = { x: e.touches[0].clientX - canvas.getBoundingClientRect().left, y: e.touches[0].clientY - canvas.getBoundingClientRect().top };
+            } else if (e.touches.length === 2) {
+                isDragging = false;
+                var dx = e.touches[0].clientX - e.touches[1].clientX;
+                var dy = e.touches[0].clientY - e.touches[1].clientY;
+                lastDistance = Math.sqrt(dx * dx + dy * dy);
+            }
+        });
+
+        canvas.addEventListener('touchmove', function(e) {
+            e.preventDefault();
+            if (e.touches.length === 1 && isDragging) {
+                var currentX = e.touches[0].clientX - canvas.getBoundingClientRect().left;
+                var currentY = e.touches[0].clientY - canvas.getBoundingClientRect().top;
+                var deltaX = (currentX - dragStart.x) / zoom;
+                var deltaY = (currentY - dragStart.y) / zoom;
+                panX += deltaX;
+                panY += deltaY;
+                dragStart = { x: currentX, y: currentY };
+                redraw();
+            } else if (e.touches.length === 2) {
+                var dx = e.touches[0].clientX - e.touches[1].clientX;
+                var dy = e.touches[0].clientY - e.touches[1].clientY;
+                var currentDistance = Math.sqrt(dx * dx + dy * dy);
+                var zoomSpeed = 0.01;
+                var newZoom = zoom + (currentDistance - lastDistance) * zoomSpeed;
+                zoom = Math.max(0.5, Math.min(newZoom, 3));
+                lastDistance = currentDistance;
+                redraw();
+            }
+        });
+
+        canvas.addEventListener('touchend', function(e) {
+            isDragging = false;
+            lastDistance = 0;
         });
 
         redraw();
