@@ -1,193 +1,276 @@
-class Node:
-    def __init__(self, value, left=None, right=None):
-        self.value = value
-        self.left = left
-        self.right = right
+{% extends 'base.html' %}
 
-class BinaryTree:
-    def __init__(self, root_value=None):
-        self.root = Node(root_value) if root_value is not None else None
-    
-    def insert_left(self, value, start=None):
-        if start is None:
-            start = self.root
-        
-        queue = [start]
-        while queue:
-            node = queue.pop(0)
-            if node.left is None:
-                node.left = Node(value)
-                return
-            else:
-                queue.append(node.left)
+{% block head %}
+<title>Binary Tree</title>
+{% endblock %}
 
-            if node.right is None:
-                node.right = Node(value)
-                return
-            else:
-                queue.append(node.right)
-    
-    def insert_right(self, value, start=None):
-        if start is None:
-            start = self.root
-        
-        queue = [start]
-        while queue:
-            node = queue.pop(0)
-            if node.right is None:
-                node.right = Node(value)
-                return
-            else:
-                queue.append(node.right)
+{% block body %}
+<div class="works page-bg">
+    <div class="work-detail-section">
+        <h1>BINARY TREE</h1>
+        <div class="io-box">
+            <form action="/tree" method="post">
+                <div class="container">
+                    <div id="data-field">
+                        <label for="value">Enter Value</label>
+                        <input type="text" id="value" name="value" value="{{ request.form.value }}">
+                    </div>
+                    <div class="operation-field">
+                        <label for="operation">Operation</label>
+                        <select name="operation" id="operation" onchange="toggleStartingNode(); toggleInputFields();">
+                            <option value="insert_left" {% if request.form.get('operation') == 'insert_left' %}selected{% endif %}>Insert Left</option>
+                            <option value="insert_right" {% if request.form.get('operation') == 'insert_right' %}selected{% endif %}>Insert Right</option>
+                            <option value="delete" {% if request.form.get('operation') == 'delete' %}selected{% endif %}>Delete</option>
+                            <option value="search" {% if request.form.get('operation') == 'search' %}selected{% endif %}>Search</option>
+                            <option value="preorder_traversal" {% if request.form.get('operation') == 'preorder_traversal' %}selected{% endif %}>Pre-order Traversal</option>
+                            <option value="inorder_traversal" {% if request.form.get('operation') == 'inorder_traversal' %}selected{% endif %}>In-order Traversal</option>
+                            <option value="postorder_traversal" {% if request.form.get('operation') == 'postorder_traversal' %}selected{% endif %}>Post-order Traversal</option>
+                        </select>
+                    </div>
+                    <div class="operation-field" id="starting-node-field" style="display: none;">
+                        <label for="starting_node">Starting Node (optional)</label>
+                        <input type="text" id="starting_node" name="starting_node" placeholder="Leave empty for root">
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 10px; justify-content: center;">
+                    <input type="submit" value="Execute" style="padding: 10px 30px; background-color: #ffffff; color: rgb(0, 0, 0); border: 2px solid rgb(255, 255, 255); border-radius: 4px; cursor: pointer; font-weight: bold;">
+                    <button type="submit" name="action" value="clear" style="padding: 10px 30px; background-color: #f44336; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Clear Tree</button>
+                </div>
+            </form>
 
-            if node.left is None:
-                node.left = Node(value)
-                return
-            else:
-                queue.append(node.left)
-    
-    def find_node_by_value(self, value, start=None):
-        if start is None:
-            start = self.root
-        if start is None:
-            return None
-        
-        queue = [start]
-        while queue:
-            node = queue.pop(0)
-            if node.value == value:
-                return node  # returns the first matching node
-            if node.left:
-                queue.append(node.left)
-            if node.right:
-                queue.append(node.right)
-        return None
-    
-    def preorder_traversal(self, start, traversal=""):
-        if start:
-            traversal += (str(start.value) + " ")
-            traversal = self.preorder_traversal(start.left, traversal)
-            traversal = self.preorder_traversal(start.right, traversal)
-        return traversal
+            {% if message %}
+                <p class="message">{{ message }}</p>
+            {% endif %}
+            {% if search_result %}
+                {% if "Not Found" in search_result %}
+                    <p class="message-error">{{ search_result }}</p>
+                {% else %}
+                    <p class="message-success">{{ search_result }}</p>
+                {% endif %}
+            {% endif %}
+            {% if traversal_result %}
+                <p class="traversal_result">{{ traversal_result }}</p>
+            {% endif %}
 
-    def inorder_traversal(self, start, traversal=""):
-        if start:
-            traversal = self.inorder_traversal(start.left, traversal)
-            traversal += (str(start.value) + " ")
-            traversal = self.inorder_traversal(start.right, traversal)
-        return traversal
-    
-    def postorder_traversal(self, start, traversal=""):
-        if start:
-            traversal = self.postorder_traversal(start.left, traversal)
-            traversal = self.postorder_traversal(start.right, traversal)
-            traversal += str(start.value) + " "
-        return traversal
+            <!-- Tree Visualization -->
+            <div class="tree-container" id="treeCanvas">
+                <canvas id="tree-canvas" 
+                    data-tree='{% if tree %}{{ tree | tojson | safe }}{% else %}""{% endif %}'></canvas>
+                <p id="empty-note" class="empty-tree-note">Tree is empty. Insert values to visualize.</p>
+            </div>
+        </div>
+    </div>
+</div>
 
-    def delete(self, value):
-        if self.root is None:
-            return False
-        
-        if self.root.value == value:
-            # If root is to be deleted
-            if self.root.left is None and self.root.right is None:
-                self.root = None
-                return True
-            elif self.root.left is None:
-                self.root = self.root.right
-                return True
-            elif self.root.right is None:
-                self.root = self.root.left
-                return True
-            else:
-                # Find inorder successor (leftmost node in right subtree)
-                parent = self.root
-                successor = self.root.right
-                while successor.left is not None:
-                    parent = successor
-                    successor = successor.left
-                
-                # Replace root value with successor value
-                self.root.value = successor.value
-                
-                # Delete successor
-                if parent == self.root:
-                    self.root.right = successor.right
-                else:
-                    parent.left = successor.right
-                return True
-        
-        # For non-root nodes, use BFS to find and delete
-        queue = [self.root]
-        while queue:
-            node = queue.pop(0)
+<script>
+    function toggleStartingNode() {
+        const operation = document.getElementById('operation').value;
+        const startingNodeField = document.getElementById('starting-node-field');
+        if (operation === 'insert_left' || operation === 'insert_right') {
+            startingNodeField.style.display = 'block';
+        } else {
+            startingNodeField.style.display = 'none';
+        }
+    }
+    document.addEventListener('DOMContentLoaded', toggleStartingNode);
+
+    function toggleInputFields() {
+        const operation = document.getElementById('operation').value;
+        const dataField = document.getElementById('data-field');
+        const startingNodeField = document.getElementById('starting-node-field');
+        if (operation === 'preorder_traversal' || operation === 'inorder_traversal' || operation === 'postorder_traversal') {
+            dataField.style.display = 'none'
+            startingNodeField.style.display = 'none'
+        } else {
+            dataField.style.display = 'block'
+        }
+    }
+    document.addEventListener('DOMContentLoaded', toggleInputFields);
+
+    // Draw tree visualization with zoom and pan
+    (function drawTreeIfAny() {
+        var canvas = document.getElementById('tree-canvas');
+        if (!canvas) return;
+        var data = canvas.getAttribute('data-tree');
+        if (!data || data === '""') {
+            document.getElementById('empty-note').style.display = 'block';
+            return;
+        }
+
+        try {
+            var treeData = JSON.parse(data);
+        } catch (e) {
+            console.error('Invalid tree JSON', e);
+            return;
+        }
+
+        var container = document.getElementById('treeCanvas');
+        var emptyNote = document.getElementById('empty-note');
+        if (emptyNote) emptyNote.style.display = 'none';
+
+        var ctx = canvas.getContext('2d');
+        var nodeRadius = 25;
+        var levelHeight = 100;
+        var minNodeSpacing = 80;
+
+        var zoom = 1;
+        var panX = 0;
+        var panY = 0;
+        var isDragging = false;
+        var dragStart = { x: 0, y: 0 };
+        var lastDistance = 0;
+
+        function getTreeDepth(node) {
+            if (!node) return 0;
+            return 1 + Math.max(getTreeDepth(node.left), getTreeDepth(node.right));
+        }
+
+        function getTreeWidth(node, depth) {
+            if (!node) return 0;
+            if (depth === 1) return 1;
+            return getTreeWidth(node.left, depth - 1) + getTreeWidth(node.right, depth - 1);
+        }
+
+        var depth = getTreeDepth(treeData);
+        var maxWidth = getTreeWidth(treeData, depth);
+        var requiredCanvasWidth = maxWidth * minNodeSpacing + 100;
+        var requiredHeight = (depth * levelHeight) + 100;
+
+        canvas.width = Math.max(container.offsetWidth, requiredCanvasWidth);
+        canvas.height = Math.max(600, requiredHeight);
+
+        function drawNode(node, x, y, horizontalSpacing) {
+            if (!node) return;
+
+            if (node.left) {
+                var leftX = x - horizontalSpacing;
+                var leftY = y + levelHeight;
+                ctx.beginPath();
+                ctx.moveTo(x, y + nodeRadius);
+                ctx.lineTo(leftX, leftY - nodeRadius);
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                drawNode(node.left, leftX, leftY, horizontalSpacing / 2);
+            }
+
+            if (node.right) {
+                var rightX = x + horizontalSpacing;
+                var rightY = y + levelHeight;
+                ctx.beginPath();
+                ctx.moveTo(x, y + nodeRadius);
+                ctx.lineTo(rightX, rightY - nodeRadius);
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                drawNode(node.right, rightX, rightY, horizontalSpacing / 2);
+            }
+
+            ctx.beginPath();
+            ctx.arc(x, y, nodeRadius, 0, 2 * Math.PI);
+            ctx.fillStyle = '#151515';
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(node.value, x, y);
+        }
+
+        function redraw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.save();
             
-            # Check left child
-            if node.left and node.left.value == value:
-                if node.left.left is None and node.left.right is None:
-                    node.left = None
-                elif node.left.left is None:
-                    node.left = node.left.right
-                elif node.left.right is None:
-                    node.left = node.left.left
-                else:
-                    # Find inorder successor
-                    parent = node.left
-                    successor = node.left.right
-                    while successor.left is not None:
-                        parent = successor
-                        successor = successor.left
-                    
-                    node.left.value = successor.value
-                    if parent == node.left:
-                        node.left.right = successor.right
-                    else:
-                        parent.left = successor.right
-                return True
+            ctx.translate(canvas.width / 2, 0);
+            ctx.scale(zoom, zoom);
+            ctx.translate(-canvas.width / 2 + panX, panY);
             
-            # Check right child
-            if node.right and node.right.value == value:
-                if node.right.left is None and node.right.right is None:
-                    node.right = None
-                elif node.right.left is None:
-                    node.right = node.right.right
-                elif node.right.right is None:
-                    node.right = node.right.left
-                else:
-                    # Find inorder successor
-                    parent = node.right
-                    successor = node.right.right
-                    while successor.left is not None:
-                        parent = successor
-                        successor = successor.left
-                    
-                    node.right.value = successor.value
-                    if parent == node.right:
-                        node.right.right = successor.right
-                    else:
-                        parent.left = successor.right
-                return True
+            var initialSpacing = canvas.width / 4;
+            drawNode(treeData, canvas.width / 2, 60, initialSpacing);
             
-            if node.left:
-                queue.append(node.left)
-            if node.right:
-                queue.append(node.right)
-        
-        return False
-    
-    def search(self, value, start=None):
-        if start is None:
-            start = self.root
-        if start is None:
-            return False
-        
-        queue = [start]
-        while queue:
-            node = queue.pop(0)
-            if node.value == value:
-                return True
-            if node.left:
-                queue.append(node.left)
-            if node.right:
-                queue.append(node.right)
-        return False
+            ctx.restore();
+        }
+
+        // Mouse wheel zoom
+        canvas.addEventListener('wheel', function(e) {
+            e.preventDefault();
+            var zoomSpeed = 0.1;
+            var newZoom = zoom + (e.deltaY > 0 ? -zoomSpeed : zoomSpeed);
+            zoom = Math.max(0.5, Math.min(newZoom, 3));
+            redraw();
+        });
+
+        // Mouse drag pan
+        canvas.addEventListener('mousedown', function(e) {
+            isDragging = true;
+            dragStart = { x: e.offsetX, y: e.offsetY };
+        });
+
+        canvas.addEventListener('mousemove', function(e) {
+            if (isDragging) {
+                var deltaX = (e.offsetX - dragStart.x) / zoom;
+                var deltaY = (e.offsetY - dragStart.y) / zoom;
+                panX += deltaX;
+                panY += deltaY;
+                dragStart = { x: e.offsetX, y: e.offsetY };
+                redraw();
+            }
+        });
+
+        canvas.addEventListener('mouseup', function() {
+            isDragging = false;
+        });
+
+        canvas.addEventListener('mouseleave', function() {
+            isDragging = false;
+        });
+
+        // Touch events for mobile
+        canvas.addEventListener('touchstart', function(e) {
+            if (e.touches.length === 1) {
+                isDragging = true;
+                dragStart = { x: e.touches[0].clientX - canvas.getBoundingClientRect().left, y: e.touches[0].clientY - canvas.getBoundingClientRect().top };
+            } else if (e.touches.length === 2) {
+                isDragging = false;
+                var dx = e.touches[0].clientX - e.touches[1].clientX;
+                var dy = e.touches[0].clientY - e.touches[1].clientY;
+                lastDistance = Math.sqrt(dx * dx + dy * dy);
+            }
+        });
+
+        canvas.addEventListener('touchmove', function(e) {
+            e.preventDefault();
+            if (e.touches.length === 1 && isDragging) {
+                var currentX = e.touches[0].clientX - canvas.getBoundingClientRect().left;
+                var currentY = e.touches[0].clientY - canvas.getBoundingClientRect().top;
+                var deltaX = (currentX - dragStart.x) / zoom;
+                var deltaY = (currentY - dragStart.y) / zoom;
+                panX += deltaX;
+                panY += deltaY;
+                dragStart = { x: currentX, y: currentY };
+                redraw();
+            } else if (e.touches.length === 2) {
+                var dx = e.touches[0].clientX - e.touches[1].clientX;
+                var dy = e.touches[0].clientY - e.touches[1].clientY;
+                var currentDistance = Math.sqrt(dx * dx + dy * dy);
+                var zoomSpeed = 0.01;
+                var newZoom = zoom + (currentDistance - lastDistance) * zoomSpeed;
+                zoom = Math.max(0.5, Math.min(newZoom, 3));
+                lastDistance = currentDistance;
+                redraw();
+            }
+        });
+
+        canvas.addEventListener('touchend', function(e) {
+            isDragging = false;
+            lastDistance = 0;
+        });
+
+        redraw();
+    })();
+</script>
+{% endblock %}
