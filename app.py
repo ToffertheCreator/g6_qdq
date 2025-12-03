@@ -289,14 +289,14 @@ def bst():
                 
                 # If tree is empty, create root
                 if session['bst'] is None:
-                    from algorithms import bst as bst  # <<< changed to use bst.BST()
+                    from algorithms import bst as bst  
                     bst_tree = bst.BST(numeric_value)
                     session['bst'] = node_to_dict(bst_tree.root)
                     session.modified = True
                     message = f"Inserted {numeric_value}"
                 else:
                     # Tree already exists, insert into it
-                    from algorithms import bst as bst  # <<< changed to use bst.BST()
+                    from algorithms import bst as bst  
                     bst_tree = bst.BST()
                     bst_tree.root = node_from_dict(session['bst'])
                     bst_tree.insert(numeric_value)
@@ -311,7 +311,7 @@ def bst():
             try:
                 numeric_value = int(value) if '.' not in value else float(value)
                 if session['bst']:
-                    from algorithms import bst as bst  # <<< changed to use bst.BST()
+                    from algorithms import bst as bst 
                     bst_tree = bst.BST()
                     bst_tree.root = node_from_dict(session['bst'])
                     
@@ -329,7 +329,7 @@ def bst():
             try:
                 numeric_value = int(value) if '.' not in value else float(value)
                 if session['bst']:
-                    from algorithms import bst as bst  # <<< changed to use bst.BST()
+                    from algorithms import bst as bst 
                     bst_tree = bst.BST()
                     bst_tree.root = node_from_dict(session['bst'])
                     
@@ -345,7 +345,7 @@ def bst():
         # Handle traversals
         elif operation in ['preorder_traversal', 'inorder_traversal', 'postorder_traversal']:
             if session['bst']:
-                from algorithms import bst as bst  # <<< changed to use bst.BST()
+                from algorithms import bst as bst
                 bst_tree = bst.BST()
                 bst_tree.root = node_from_dict(session['bst'])
                 
