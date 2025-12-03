@@ -234,13 +234,37 @@ def tree():
     tree_data = session['tree']
     return render_template('binarytree.html', tree=tree_data, message=message, traversal_result=traversal_result, search_result=search_result)
 
+def node_to_dict(node):
+    """Convert Node object to dictionary for JSON serialization"""
+    if node is None:
+        return None
+    return {
+        'value': node.value,
+        'left': node_to_dict(node.left),
+        'right': node_to_dict(node.right)
+    }
+
+def node_from_dict(data):
+    """Convert dictionary back to Node object"""
+    if data is None:
+        return None
+    return binarytree.Node(
+        data['value'],
+        node_from_dict(data['left']),
+        node_from_dict(data['right'])
+    )
+
 @app.route('/bst', methods=['GET', 'POST'])
-def bst_route():
+def bst():
     message = ""
     traversal_result = ""
     search_result = ""
+    tree_data = None
 
-    if request.method == 'GET' or 'bst' not in session:
+    if request.method == 'GET':
+        session['bst'] = None
+
+    if 'bst' not in session:
         session['bst'] = None
 
     if request.method == 'POST':
@@ -248,97 +272,97 @@ def bst_route():
         value = request.form.get('value', '').strip()
         action = request.form.get('action')
 
-        # Clear tree
+        # Handle clear action
         if action == 'clear':
             session['bst'] = None
             session.modified = True
-            return render_template(
-                'binarysearchtree.html',
-                tree=None,
-                message="Tree cleared successfully"
-            )
+            message = "Tree cleared successfully"
+            return render_template('binarysearchtree.html', tree=None, message=message)
+        
+        operation = request.form.get('operation')
+        value = request.form.get('value', '').strip()
 
-        # Convert input to int/float
-        try:
-            numeric_value = int(value) if '.' not in value else float(value)
-        except ValueError:
-            numeric_value = None
-
-        # INSERT
-        if operation == 'insert' and numeric_value is not None:
-            if session['bst'] is None:
-                bst_tree = bst.BST(numeric_value)
-            else:
-                bst_tree = bst.BST()          
-                bst_tree.root = node_from_dict(session['bst'])
-                bst_tree.insert(numeric_value)
-
-            session['bst'] = node_to_dict(bst_tree.root)
-            session.modified = True
-            message = f"Inserted {numeric_value}"
-
-        # SEARCH
-        elif operation == 'search' and numeric_value is not None:
-            if session['bst']:
-                bst_tree = bst.BST()
-                bst_tree.root = node_from_dict(session['bst'])
-
-                found = bst_tree.search(numeric_value)
-                search_result = (
-                    f"✓ Found: {numeric_value}"
-                    if found else f"✗ Not Found: {numeric_value}"
-                )
-            else:
-                message = "Tree is empty"
-
-        # DELETE
-        elif operation == 'delete' and numeric_value is not None:
-            if session['bst']:
-                bst_tree = bst.BST()
-                bst_tree.root = node_from_dict(session['bst'])
-
-                bst_tree.root = bst_tree.delete(numeric_value, bst_tree.root)
-                message = f"Deleted {numeric_value}"
-
-                session['bst'] = (
-                    node_to_dict(bst_tree.root) if bst_tree.root else None
-                )
-                session.modified = True
-            else:
-                message = "Tree is empty"
-
-        # TRAVERSALS
-        elif operation in [
-            'preorder_traversal',
-            'inorder_traversal',
-            'postorder_traversal'
-        ]:
-            if session['bst']:
-                bst_tree = bst.BST()
-                bst_tree.root = node_from_dict(session['bst'])
-
-                if operation == 'preorder_traversal':
-                    traversal_result = (
-                        f"Preorder: {bst_tree.preorder_traversal(bst_tree.root).strip()}"
-                    )
-                elif operation == 'inorder_traversal':
-                    traversal_result = (
-                        f"Inorder: {bst_tree.inorder_traversal(bst_tree.root).strip()}"
-                    )
+        # Handle insertions
+        if operation == 'insert' and value:
+            try:
+                numeric_value = int(value) if '.' not in value else float(value)
+                
+                # If tree is empty, create root
+                if session['bst'] is None:
+                    from algorithms import bst as bst  # <<< changed to use bst.BST()
+                    bst_tree = bst.BST(numeric_value)
+                    session['bst'] = node_to_dict(bst_tree.root)
+                    session.modified = True
+                    message = f"Inserted {numeric_value}"
                 else:
-                    traversal_result = (
-                        f"Postorder: {bst_tree.postorder_traversal(bst_tree.root).strip()}"
-                    )
+                    # Tree already exists, insert into it
+                    from algorithms import bst as bst  # <<< changed to use bst.BST()
+                    bst_tree = bst.BST()
+                    bst_tree.root = node_from_dict(session['bst'])
+                    bst_tree.insert(numeric_value)
+                    message = f"Inserted {numeric_value}"
+                    session['bst'] = node_to_dict(bst_tree.root)
+                    session.modified = True
+            except ValueError:
+                message = f"Error: {value} is not a valid number"
+        
+        # Handle search
+        elif operation == 'search' and value:
+            try:
+                numeric_value = int(value) if '.' not in value else float(value)
+                if session['bst']:
+                    from algorithms import bst as bst  # <<< changed to use bst.BST()
+                    bst_tree = bst.BST()
+                    bst_tree.root = node_from_dict(session['bst'])
+                    
+                    if bst_tree.search(numeric_value):
+                        search_result = f"✓ Found: {numeric_value} exists in the tree"
+                    else:
+                        search_result = f"✗ Not Found: {numeric_value} does not exist in the tree"
+                else:
+                    message = "Tree is empty"
+            except ValueError:
+                message = f"Error: {value} is not a valid number"
+        
+        # Handle delete
+        elif operation == 'delete' and value:
+            try:
+                numeric_value = int(value) if '.' not in value else float(value)
+                if session['bst']:
+                    from algorithms import bst as bst  # <<< changed to use bst.BST()
+                    bst_tree = bst.BST()
+                    bst_tree.root = node_from_dict(session['bst'])
+                    
+                    bst_tree.root = bst_tree.delete(numeric_value, bst_tree.root)
+                    message = f"Deleted {numeric_value} from tree"
+                    session['bst'] = node_to_dict(bst_tree.root) if bst_tree.root else None
+                    session.modified = True
+                else:
+                    message = "Tree is empty"
+            except ValueError:
+                message = f"Error: {value} is not a valid number"
+        
+        # Handle traversals
+        elif operation in ['preorder_traversal', 'inorder_traversal', 'postorder_traversal']:
+            if session['bst']:
+                from algorithms import bst as bst  # <<< changed to use bst.BST()
+                bst_tree = bst.BST()
+                bst_tree.root = node_from_dict(session['bst'])
+                
+                if operation == 'preorder_traversal':
+                    result = bst_tree.preorder_traversal(bst_tree.root).strip()
+                    traversal_result = f"Preorder: {result}"
+                elif operation == 'inorder_traversal':
+                    result = bst_tree.inorder_traversal(bst_tree.root).strip()
+                    traversal_result = f"Inorder: {result}"
+                elif operation == 'postorder_traversal':
+                    result = bst_tree.postorder_traversal(bst_tree.root).strip()
+                    traversal_result = f"Postorder: {result}"
             else:
                 message = "Tree is empty"
 
-    return render_template(
-        'binarysearchtree.html',
-        tree=session['bst'],
-        message=message,
-        traversal_result=traversal_result,
-        search_result=search_result
-    )
+    tree_data = session['bst']
+    return render_template('binarysearchtree.html', tree=tree_data, message=message, traversal_result=traversal_result, search_result=search_result)
 
 @app.route('/contact')
 def contact():
