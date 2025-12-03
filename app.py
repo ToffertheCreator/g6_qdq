@@ -248,110 +248,121 @@ def bst():
     min_result = ""
     height_result = ""
 
-    # Initialize session tree
-    if request.method == "GET" and "bst_tree" not in session:
-        session["bst_tree"] = None
+    # Initialize session store for bst on GET
+    if request.method == 'GET' and 'bst' not in session:
+        session['bst'] = None
 
-    # Restore BST object
-    def restore():
-        data = session.get("bst_tree")
-        if data is None:
+    # Helper to restore BST object from session 
+    def restore_bst_from_session():
+        root_dict = session.get('bst')
+        if not root_dict:
             return None
-        root = node_from_dict(data)
-        bt = bst.BST()  # Create empty tree from BST module
-        bt.root = root  # Directly assign the root node
+        root_node = node_from_dict(root_dict)
+        bt = bst.BST()  # create empty BST instance
+        bt.root = root_node
         return bt
 
-    # Save back to session
-    def save(bt):
-        session["bst_tree"] = node_to_dict(bt.root) if bt and bt.root else None
+    # Helper to save BST root to session
+    def save_bst_to_session(bt):
+        if bt is None or bt.root is None:
+            session['bst'] = None
+        else:
+            session['bst'] = node_to_dict(bt.root)
         session.modified = True
 
-    if request.method == "POST":
-        action = request.form.get("action")
-        op = request.form.get("operation")
-        raw = request.form.get("value", "").strip()
+    if request.method == 'POST':
+        action = request.form.get('action', None)
+        operation = request.form.get('operation', '').strip()
+        value_raw = request.form.get('value', '').strip()
 
-        # Clear
-        if action == "clear":
-            session["bst_tree"] = None
-            return render_template("bst.html", tree=None, message="Tree cleared.")
+        # CLEAR action (top-priority)
+        if action == 'clear':
+            session['bst'] = None
+            session.modified = True
+            message = "BST cleared successfully"
+            return render_template('binarysearchtree.html', tree=None, message=message)
 
-        # Parse input value
+        # parse numeric value for BST operations
         value = None
-        if raw != "":
+        if value_raw != '':
             try:
-                value = int(raw)
-            except:
-                return render_template("bst.html", tree=session.get("bst_tree"), message="Value must be a number.")
+                value = int(value_raw) if '.' not in value_raw else float(value_raw)
+            except ValueError:
+                message = f"Error: {value_raw} is not a valid number"
 
-        bt = restore()
+        bt = restore_bst_from_session()
 
         # Insert
-        if op == "insert":
-            if bt is None:
-                bt = bst.BST(value)
+        if operation == 'insert':
+            if value is None:
+                message = "No value provided for insert."
             else:
-                bt.insert(value)
-            save(bt)
-            message = f"Inserted {value}"
+                if bt is None:
+                    bt = bst.BST(value)
+                    message = f"Inserted root {value}"
+                else:
+                    bt.insert(value)
+                    message = f"Inserted {value}"
+                save_bst_to_session(bt)
 
         # Search
-        elif op == "search":
-            if bt:
-                found = bt.search(bt.root, value)
-                search_result = f"✓ {value} found" if found else f"✗ {value} not found"
-            else:
+        elif operation == 'search':
+            if bt is None:
                 message = "Tree is empty"
+            else:
+                found = bt.search(value) is not None
+                search_result = f"✓ Found: {value} exists in the tree" if found else f"✗ Not Found: {value} does not exist in the tree"
 
         # Delete
-        elif op == "delete":
-            if bt:
-                bt.root = bt.delete(bt.root, value)
-                save(bt)
-                message = f"Deleted {value}"
-            else:
+        elif operation == 'delete':
+            if bt is None:
                 message = "Tree is empty"
+            else:
+                # bst.delete returns the new subtree root; call with (value, node)
+                bt.root = bt.delete(value, bt.root)
+                save_bst_to_session(bt)
+                message = f"Deleted {value} from tree"
 
-        # Max value
-        elif op == "get_max":
-            if bt:
+        # Get max
+        elif operation == 'get_max':
+            if bt is None:
+                message = "Tree is empty"
+            else:
                 max_result = bt.get_max(bt.root)
-            else:
-                message = "Tree is empty"
 
-        # Min value
-        elif op == "get_min":
-            if bt:
-                min_result = bt.get_min(bt.root)
-            else:
+        # Get min
+        elif operation == 'get_min':
+            if bt is None:
                 message = "Tree is empty"
+            else:
+                min_result = bt.get_min(bt.root)
 
         # Height
-        elif op == "height":
-            if bt:
-                height_result = bt.find_height(bt.root)
-            else:
+        elif operation == 'height':
+            if bt is None:
                 message = "Tree is empty"
+            else:
+                height_result = bt.find_height(bt.root)
 
         # Traversals
-        elif op in ["preorder_traversal", "inorder_traversal", "postorder_traversal"]:
-            if not bt:
+        elif operation in ['preorder_traversal', 'inorder_traversal', 'postorder_traversal']:
+            if bt is None:
                 message = "Tree is empty"
             else:
-                if op == "preorder_traversal":
-                    traversal_result = "Preorder: " + bt.preorder_traversal(bt.root)
-                elif op == "inorder_traversal":
-                    traversal_result = "Inorder: " + bt.inorder_traversal(bt.root)
-                elif op == "postorder_traversal":
-                    traversal_result = "Postorder: " + bt.postorder_traversal(bt.root)
+                if operation == 'preorder_traversal':
+                    traversal_result = 'Preorder: ' + bt.preorder_traversal(bt.root).strip()
+                elif operation == 'inorder_traversal':
+                    traversal_result = 'Inorder: ' + bt.inorder_traversal(bt.root).strip()
+                elif operation == 'postorder_traversal':
+                    traversal_result = 'Postorder: ' + bt.postorder_traversal(bt.root).strip()
 
+    tree_data = session.get('bst')
     return render_template(
-        "bst.html",
-        tree=session.get("bst_tree"),
+        'binarysearchtree.html',
+        tree=tree_data,
         message=message,
-        search_result=search_result,
         traversal_result=traversal_result,
+        search_result=search_result,
         max_result=max_result,
         min_result=min_result,
         height_result=height_result
