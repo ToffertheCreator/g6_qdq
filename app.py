@@ -1,5 +1,5 @@
 from flask import Flask, request, render_template, session
-from algorithms import deque, queue, binarytree
+from algorithms import deque, queue, binarytree, bst
 import os
 
 app = Flask(__name__)
@@ -95,8 +95,8 @@ def dq():
     deque_items = my_deque.display()
     return render_template('deque.html', deque_items=deque_items, message=message, removed_message=removed_message)
 
-@app.route('/tree', methods=['GET', 'POST'])
-def tree():
+@app.route('/binary_tree', methods=['GET', 'POST'])
+def binary_tree():
     message = ""
     traversal_result = ""
     search_result = ""
@@ -213,6 +213,177 @@ def tree():
 
     tree_data = session['tree']
     return render_template('binarytree.html', tree=tree_data, message=message, traversal_result=traversal_result, search_result=search_result)
+
+@app.route('/bst', methods=['GET', 'POST'])
+def bst_route():
+    message = ""
+    traversal_result = ""
+    search_result = ""
+    tree_data = None
+
+    if request.method == 'GET':
+        session['bst'] = None
+        session['bst_type'] = None
+
+    if 'bst' not in session:
+        session['bst'] = None
+    if 'bst_type' not in session:
+        session['bst_type'] = None
+
+    if request.method == 'POST':
+        action = request.form.get('action')
+        
+        # Handle clear action
+        if action == 'clear':
+            session['bst'] = None
+            session['bst_type'] = None
+            session.modified = True
+            message = "BST cleared successfully"
+            return render_template('bst.html', tree=None, message=message)
+        
+        operation = request.form.get('operation')
+        value = request.form.get('value', '').strip()
+
+        # Handle insertions
+        if operation == 'insert' and value:
+            # Try to determine the type
+            try:
+                # Try int first
+                if '.' not in value:
+                    converted_value = int(value)
+                    value_type = 'int'
+                else:
+                    converted_value = float(value)
+                    value_type = 'float'
+            except ValueError:
+                # It's a string/letter
+                converted_value = value
+                value_type = 'str'
+            
+            # Check type consistency
+            if session['bst_type'] is None:
+                # First node, set the type
+                session['bst_type'] = value_type
+            elif session['bst_type'] != value_type:
+                message = f"✗ Type mismatch: BST contains {session['bst_type']}s, but you entered a {value_type}"
+                tree_data = session['bst']
+                return render_template('bst.html', tree=tree_data, message=message)
+            
+            # If tree is empty, create root
+            if session['bst'] is None:
+                bt = bst.BST(converted_value)
+                session['bst'] = node_to_dict(bt.root)
+                session.modified = True
+                message = f"Inserted {converted_value}"
+            else:
+                bt = bst.BST()
+                bt.root = node_from_dict(session['bst'])
+                bt.insert(converted_value)
+                session['bst'] = node_to_dict(bt.root)
+                session.modified = True
+                message = f"Inserted {converted_value}"
+        
+        # Handle search
+        elif operation == 'search' and value:
+            try:
+                if '.' not in value:
+                    converted_value = int(value)
+                    value_type = 'int'
+                else:
+                    converted_value = float(value)
+                    value_type = 'float'
+            except ValueError:
+                converted_value = value
+                value_type = 'str'
+            
+            if session['bst']:
+                bt = bst.BST()
+                bt.root = node_from_dict(session['bst'])
+                
+                if bt.search(converted_value):
+                    search_result = f"✓ Found: {converted_value} exists in the BST"
+                else:
+                    search_result = f"✗ Not Found: {converted_value} does not exist in the BST"
+            else:
+                message = "BST is empty"
+        
+        # Handle delete
+        elif operation == 'delete' and value:
+            try:
+                if '.' not in value:
+                    converted_value = int(value)
+                    value_type = 'int'
+                else:
+                    converted_value = float(value)
+                    value_type = 'float'
+            except ValueError:
+                converted_value = value
+                value_type = 'str'
+            
+            if session['bst']:
+                bt = bst.BST()
+                bt.root = node_from_dict(session['bst'])
+                
+                if bt.search(converted_value):
+                    bt.delete(converted_value)
+                    message = f"Deleted {converted_value} from BST"
+                    session['bst'] = node_to_dict(bt.root)
+                    session.modified = True
+                else:
+                    message = f"Could not delete {converted_value} - not found in BST"
+            else:
+                message = "BST is empty"
+        
+        # Handle traversals
+        elif operation in ['preorder_traversal', 'inorder_traversal', 'postorder_traversal']:
+            if session['bst']:
+                bt = bst.BST()
+                bt.root = node_from_dict(session['bst'])
+                
+                if operation == 'preorder_traversal':
+                    result = bt.preorder_traversal(bt.root).strip()
+                    traversal_result = f"Preorder: {result}"
+                elif operation == 'inorder_traversal':
+                    result = bt.inorder_traversal(bt.root).strip()
+                    traversal_result = f"Inorder: {result}"
+                elif operation == 'postorder_traversal':
+                    result = bt.postorder_traversal(bt.root).strip()
+                    traversal_result = f"Postorder: {result}"
+            else:
+                message = "BST is empty"
+        
+        # Handle get min
+        elif operation == 'get_min':
+            if session['bst']:
+                bt = bst.BST()
+                bt.root = node_from_dict(session['bst'])
+                min_value = bt.get_min()
+                message = f"Minimum value: {min_value}"
+            else:
+                message = "BST is empty"
+        
+        # Handle get max
+        elif operation == 'get_max':
+            if session['bst']:
+                bt = bst.BST()
+                bt.root = node_from_dict(session['bst'])
+                max_value = bt.get_max()
+                message = f"Maximum value: {max_value}"
+            else:
+                message = "BST is empty"
+        
+        # Handle get height
+        elif operation == 'find_height':
+            if session['bst']:
+                bt = bst.BST()
+                bt.root = node_from_dict(session['bst'])
+                height = bt.find_height()
+                message = f"Height of BST: {height}"
+            else:
+                message = "BST is empty"
+
+    tree_data = session['bst']
+    return render_template('bst.html', tree=tree_data, message=message, traversal_result=traversal_result, search_result=search_result)
 
 def node_to_dict(node):
     """Convert Node object to dictionary for JSON serialization"""

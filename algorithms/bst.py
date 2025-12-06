@@ -10,15 +10,21 @@ class BST:
     
     def insert(self, data, node=None):
         if node is None:
+            if self.root is None:
+                self.root = Node(data)
+                return self.root
             node = self.root
-        if node is None:
-            self.root = Node(data)
-            return self.root
-        
+
         if data < node.value:
-            node.left = self.insert(data, node.left)
+            if node.left is None:
+                node.left = Node(data)
+            else:
+                self.insert(data, node.left)
         else:
-            node.right = self.insert(data, node.right)
+            if node.right is None:
+                node.right = Node(data)
+            else:
+                self.insert(data, node.right)
         return node
     
     def search(self, target, node=None):
@@ -30,10 +36,14 @@ class BST:
         if node.value == target:
             return node
         
-        elif node.value < target:
-            return self.search(target, node.right)
-        else:
+        elif target < node.value:
+            if node.left is None:
+                return None
             return self.search(target, node.left)
+        else:
+            if node.right is None:
+                return None
+            return self.search(target, node.right)
     
     def get_min(self, node=None):
         if node is None:
@@ -62,11 +72,13 @@ class BST:
             node = self.root
         if node is None:
             return -1
-        
-        left_height = self.find_height(node.left)
-        right_height = self.find_height(node.right)
 
-        return 1+max(left_height, right_height)
+        if node.left is None and node.right is None:
+            return 0
+
+        left_height = self.find_height(node.left) if node.left else -1
+        right_height = self.find_height(node.right) if node.right else -1
+        return 1 + max(left_height, right_height)
     
     def get_min_node(self, node=None):
         if node is None:
@@ -99,7 +111,7 @@ class BST:
                 # Find inorder successor
                 succ = self.get_min_node(node.right)
                 node.value = succ.value
-                node.right = self.delete(node.right, succ.value)
+                node.right = self.delete(succ.value, node.right)
         return node
 
     def preorder_traversal(self, start, traversal=""):

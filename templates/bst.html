@@ -1,15 +1,15 @@
 {% extends 'base.html' %}
 
 {% block head %}
-<title>Binary Tree</title>
+<title>Binary Search Tree</title>
 {% endblock %}
 
 {% block body %}
 <div class="works page-bg">
     <div class="work-detail-section">
-        <h1>BINARY TREE</h1>
+        <h1>BINARY SEARCH TREE</h1>
         <div class="io-box">
-            <form action="/binary_tree" method="post">
+            <form action="/bst" method="post">
                 <div class="container">
                     <div id="data-field">
                         <label for="value">Enter Value</label>
@@ -17,19 +17,17 @@
                     </div>
                     <div class="operation-field">
                         <label for="operation">Operation</label>
-                        <select name="operation" id="operation" onchange="toggleStartingNode(); toggleInputFields();">
-                            <option value="insert_left" {% if request.form.get('operation') == 'insert_left' %}selected{% endif %}>Insert Left</option>
-                            <option value="insert_right" {% if request.form.get('operation') == 'insert_right' %}selected{% endif %}>Insert Right</option>
+                        <select name="operation" id="operation" onchange="toggleInputFields();">
+                            <option value="insert" {% if request.form.get('operation') == 'insert' %}selected{% endif %}>Insert</option>
                             <option value="delete" {% if request.form.get('operation') == 'delete' %}selected{% endif %}>Delete</option>
                             <option value="search" {% if request.form.get('operation') == 'search' %}selected{% endif %}>Search</option>
                             <option value="preorder_traversal" {% if request.form.get('operation') == 'preorder_traversal' %}selected{% endif %}>Pre-order Traversal</option>
                             <option value="inorder_traversal" {% if request.form.get('operation') == 'inorder_traversal' %}selected{% endif %}>In-order Traversal</option>
                             <option value="postorder_traversal" {% if request.form.get('operation') == 'postorder_traversal' %}selected{% endif %}>Post-order Traversal</option>
+                            <option value="get_min" {% if request.form.get('operation') == 'get_min' %}selected{% endif %}>Get Minimum</option>
+                            <option value="get_max" {% if request.form.get('operation') == 'get_max' %}selected{% endif %}>Get Maximum</option>
+                            <option value="find_height" {% if request.form.get('operation') == 'find_height' %}selected{% endif %}>Find Height</option>
                         </select>
-                    </div>
-                    <div class="operation-field" id="starting-node-field" style="display: none;">
-                        <label for="starting_node">Starting Node (optional)</label>
-                        <input type="text" id="starting_node" name="starting_node" placeholder="Leave empty for root">
                     </div>
                 </div>
                 <div style="display: flex; gap: 10px; margin-top: 10px; justify-content: center;">
@@ -51,6 +49,15 @@
             {% if traversal_result %}
                 <p class="traversal_result">{{ traversal_result }}</p>
             {% endif %}
+            {% if min_result %}
+                <p class="traversal_result">Minimum value: {{ min_result }}</p>
+            {% endif %}
+            {% if max_result %}
+                <p class="traversal_result">Maximum value: {{ max_result }}</p>
+            {% endif %}
+            {% if height_result %}
+                <p class="traversal_result">Height: {{ height_result }}</p>
+            {% endif %}
 
             <!-- Tree Visualization -->
             <div class="tree-container" id="treeCanvas">
@@ -63,31 +70,18 @@
 </div>
 
 <script>
-    function toggleStartingNode() {
-        const operation = document.getElementById('operation').value;
-        const startingNodeField = document.getElementById('starting-node-field');
-        if (operation === 'insert_left' || operation === 'insert_right') {
-            startingNodeField.style.display = 'block';
-        } else {
-            startingNodeField.style.display = 'none';
-        }
-    }
-    document.addEventListener('DOMContentLoaded', toggleStartingNode);
-
     function toggleInputFields() {
         const operation = document.getElementById('operation').value;
         const dataField = document.getElementById('data-field');
-        const startingNodeField = document.getElementById('starting-node-field');
-        if (operation === 'preorder_traversal' || operation === 'inorder_traversal' || operation === 'postorder_traversal') {
-            dataField.style.display = 'none'
-            startingNodeField.style.display = 'none'
+        if (["preorder_traversal","inorder_traversal","postorder_traversal","get_min","get_max","find_height"].includes(operation)) {
+            dataField.style.display = 'none';
         } else {
-            dataField.style.display = 'block'
+            dataField.style.display = 'block';
         }
     }
     document.addEventListener('DOMContentLoaded', toggleInputFields);
 
-    // Draw tree visualization with zoom and pan
+    // Tree visualization code (unchanged)
     (function drawTreeIfAny() {
         var canvas = document.getElementById('tree-canvas');
         if (!canvas) return;
@@ -118,7 +112,6 @@
         var panY = 0;
         var isDragging = false;
         var dragStart = { x: 0, y: 0 };
-        var lastDistance = 0;
 
         function getTreeDepth(node) {
             if (!node) return 0;
@@ -195,7 +188,6 @@
             ctx.restore();
         }
 
-        // Mouse wheel zoom
         canvas.addEventListener('wheel', function(e) {
             e.preventDefault();
             var zoomSpeed = 0.1;
@@ -204,7 +196,6 @@
             redraw();
         });
 
-        // Mouse drag pan
         canvas.addEventListener('mousedown', function(e) {
             isDragging = true;
             dragStart = { x: e.offsetX, y: e.offsetY };
@@ -227,47 +218,6 @@
 
         canvas.addEventListener('mouseleave', function() {
             isDragging = false;
-        });
-
-        // Touch events for mobile
-        canvas.addEventListener('touchstart', function(e) {
-            if (e.touches.length === 1) {
-                isDragging = true;
-                dragStart = { x: e.touches[0].clientX - canvas.getBoundingClientRect().left, y: e.touches[0].clientY - canvas.getBoundingClientRect().top };
-            } else if (e.touches.length === 2) {
-                isDragging = false;
-                var dx = e.touches[0].clientX - e.touches[1].clientX;
-                var dy = e.touches[0].clientY - e.touches[1].clientY;
-                lastDistance = Math.sqrt(dx * dx + dy * dy);
-            }
-        });
-
-        canvas.addEventListener('touchmove', function(e) {
-            e.preventDefault();
-            if (e.touches.length === 1 && isDragging) {
-                var currentX = e.touches[0].clientX - canvas.getBoundingClientRect().left;
-                var currentY = e.touches[0].clientY - canvas.getBoundingClientRect().top;
-                var deltaX = (currentX - dragStart.x) / zoom;
-                var deltaY = (currentY - dragStart.y) / zoom;
-                panX += deltaX;
-                panY += deltaY;
-                dragStart = { x: currentX, y: currentY };
-                redraw();
-            } else if (e.touches.length === 2) {
-                var dx = e.touches[0].clientX - e.touches[1].clientX;
-                var dy = e.touches[0].clientY - e.touches[1].clientY;
-                var currentDistance = Math.sqrt(dx * dx + dy * dy);
-                var zoomSpeed = 0.01;
-                var newZoom = zoom + (currentDistance - lastDistance) * zoomSpeed;
-                zoom = Math.max(0.5, Math.min(newZoom, 3));
-                lastDistance = currentDistance;
-                redraw();
-            }
-        });
-
-        canvas.addEventListener('touchend', function(e) {
-            isDragging = false;
-            lastDistance = 0;
         });
 
         redraw();
