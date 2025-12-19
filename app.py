@@ -1,5 +1,5 @@
 from flask import Flask, request, render_template, session
-from algorithms import deque, queue, binarytree, bst
+from algorithms import deque, queue, binarytree, bst, graph_bfs
 import os
 
 app = Flask(__name__)
@@ -404,6 +404,28 @@ def node_from_dict(data):
         node_from_dict(data['left']),
         node_from_dict(data['right'])
     )
+
+
+@app.route('/graph', methods=['GET', 'POST'])
+def graph_route():
+    """Render graph page and compute BFS shortest path between two stations."""
+    stations = sorted(graph_bfs.graph.keys())
+    path = None
+    message = ""
+
+    if request.method == 'POST':
+        start = request.form.get('start')
+        goal = request.form.get('goal')
+        if not start or not goal:
+            message = "Please select both start and goal stations."
+        else:
+            path = graph_bfs.bfs_shortest_path(start, goal)
+            if path:
+                message = f"Shortest path: {' -> '.join(path)}"
+            else:
+                message = "No path found between the selected stations."
+
+    return render_template('graph.html', stations=stations, path=path, message=message)
 
 @app.route('/contact')
 def contact():
