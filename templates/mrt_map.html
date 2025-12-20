@@ -1,0 +1,197 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<title>MRT/LRT Map</title>
+<style>
+    .map-container {
+        position: relative;
+        width: 100%;
+        height: 1100px;
+        border: 1px solid #ccc;
+        background-color: #f9f9f9;
+        overflow: auto;
+    }
+    #map-canvas {
+        width: 100%;
+        height: 100%;
+    }
+    .controls {
+        margin: 20px 0;
+        text-align: center;
+    }
+    .path-display {
+        margin: 20px 0;
+        font-size: 18px;
+        font-weight: bold;
+    }
+    .station-tooltip {
+        position: absolute;
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 5px;
+        border-radius: 3px;
+        pointer-events: none;
+        display: none;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="works page-bg">
+    <div class="work-detail-section">
+        <h1>MRT/LRT MAP</h1>
+        <div class="io-box">
+            <div class="controls">
+                <button id="find-path-btn" style="padding: 10px 20px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Find Shortest Path</button>
+            </div>
+            <div class="path-display" id="path-display">Click two stations to set start and goal, then click "Find Shortest Path".</div>
+            <div class="map-container">
+                <canvas id="map-canvas"></canvas>
+                <div class="station-tooltip" id="tooltip"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const stationData = JSON.parse('{{ stations | tojson | safe }}');
+    const canvas = document.getElementById('map-canvas');
+    const ctx = canvas.getContext('2d');
+    const tooltip = document.getElementById('tooltip');
+    const pathDisplay = document.getElementById('path-display');
+    const findPathBtn = document.getElementById('find-path-btn');
+
+    let startStation = null;
+    let goalStation = null;
+    let highlightedPath = [];
+
+    // Set canvas size to match coordinates
+    canvas.width = 1400;
+    canvas.height = 1100;
+
+    // No scaling needed as coordinates are in pixels
+    const scaleX = 1;
+    const scaleY = 1;
+
+    function drawMap() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Draw lines
+        const lines = {
+            'MRT-3': stationData.filter(s => s.line === 'MRT-3'),
+            'LRT-1': stationData.filter(s => s.line === 'LRT-1'),
+            'LRT-2': stationData.filter(s => s.line === 'LRT-2')
+        };
+
+        for (const [line, lineStations] of Object.entries(lines)) {
+            ctx.strokeStyle = lineStations[0].color;
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            for (let i = 0; i < lineStations.length; i++) {
+                const x = lineStations[i].x * scaleX;
+                const y = lineStations[i].y * scaleY;
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            }
+            ctx.stroke();
+        }
+
+        // Draw stations
+        stationData.forEach(station => {
+            const x = station.x * scaleX;
+            const y = station.y * scaleY;
+            const radius = 10;
+            const isStart = startStation && startStation.name === station.name;
+            const isGoal = goalStation && goalStation.name === station.name;
+            const isInPath = highlightedPath.includes(station.name);
+
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, 2 * Math.PI);
+            ctx.fillStyle = isInPath ? 'yellow' : (isStart ? 'green' : (isGoal ? 'red' : station.color));
+            ctx.fill();
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Label
+            ctx.fillStyle = '#000';
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(station.name, x, y - radius - 5);
+        });
+    }
+
+    // Click logic
+    canvas.addEventListener('click', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX_actual = canvas.width / rect.width;
+        const scaleY_actual = canvas.height / rect.height;
+        const x = (e.clientX - rect.left) * scaleX_actual;
+        const y = (e.clientY - rect.top) * scaleY_actual;
+
+        const clickedStation = stationData.find(s => Math.sqrt((s.x - x) ** 2 + (s.y - y) ** 2) < 20);
+        if (clickedStation) {
+            if (!startStation) {
+                startStation = clickedStation;
+                pathDisplay.textContent = `Start: ${startStation.name}. Click another station for goal.`;
+            } else if (!goalStation) {
+                goalStation = clickedStation;
+                pathDisplay.textContent = `Start: ${startStation.name}, Goal: ${goalStation.name}. Click "Find Shortest Path".`;
+            } else {
+                startStation = clickedStation;
+                goalStation = null;
+                highlightedPath = [];
+                pathDisplay.textContent = `Start: ${startStation.name}. Click another station for goal.`;
+            }
+            drawMap();
+        }
+    });
+
+    // Hover tooltip
+    canvas.addEventListener('mousemove', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX_actual = canvas.width / rect.width;
+        const scaleY_actual = canvas.height / rect.height;
+        const x = (e.clientX - rect.left) * scaleX_actual;
+        const y = (e.clientY - rect.top) * scaleY_actual;
+
+        const hoveredStation = stationData.find(s => Math.sqrt((s.x - x) ** 2 + (s.y - y) ** 2) < 20);
+        if (hoveredStation) {
+            tooltip.style.display = 'block';
+            tooltip.style.left = `${e.clientX + 10}px`;
+            tooltip.style.top = `${e.clientY + 10}px`;
+            tooltip.textContent = hoveredStation.name;
+        } else {
+            tooltip.style.display = 'none';
+        }
+    });
+
+    // Find shortest path button
+    findPathBtn.addEventListener('click', () => {
+        if (!startStation || !goalStation) {
+            alert('Please select both start and goal stations.');
+            return;
+        }
+
+        fetch('/mrt_map', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({start: startStation.name, goal: goalStation.name})
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.error) { alert('Error: ' + data.error); return; }
+            if (!data.path || data.path.length === 0) { alert('No path found.'); return; }
+            highlightedPath = data.path;
+            pathDisplay.textContent = `Shortest Path: ${highlightedPath.join(' -> ')}`;
+            drawMap();
+        })
+        .catch(err => { console.error(err); alert('Server error: ' + err.message); });
+    });
+
+    drawMap();
+</script>
+{% endblock %}
