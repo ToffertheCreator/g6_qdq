@@ -385,30 +385,8 @@ def bst_route():
     tree_data = session['bst']
     return render_template('bst.html', tree=tree_data, message=message, traversal_result=traversal_result, search_result=search_result)
 
-def node_to_dict(node):
-    """Convert Node object to dictionary for JSON serialization"""
-    if node is None:
-        return None
-    return {
-        'value': node.value,
-        'left': node_to_dict(node.left),
-        'right': node_to_dict(node.right)
-    }
-
-def node_from_dict(data):
-    """Convert dictionary back to Node object"""
-    if data is None:
-        return None
-    return binarytree.Node(
-        data['value'],
-        node_from_dict(data['left']),
-        node_from_dict(data['right'])
-    )
-
-
 @app.route('/graph', methods=['GET', 'POST'])
 def graph_route():
-    """Render graph page and compute BFS shortest path between two stations."""
     stations = sorted(graph_bfs.graph.keys())
     path = None
     message = ""
@@ -430,6 +408,26 @@ def graph_route():
 @app.route('/contact')
 def contact():
     return render_template('contacts.html')
+
+def node_to_dict(node):
+    """Convert Node object to dictionary for JSON serialization"""
+    if node is None:
+        return None
+    return {
+        'value': node.value,
+        'left': node_to_dict(node.left),
+        'right': node_to_dict(node.right)
+    }
+
+def node_from_dict(data):
+    """Convert dictionary back to Node object"""
+    if data is None:
+        return None
+    return binarytree.Node(
+        data['value'],
+        node_from_dict(data['left']),
+        node_from_dict(data['right'])
+    )
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))

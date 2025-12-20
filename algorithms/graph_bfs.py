@@ -22,7 +22,12 @@ graph = {
     "Gil Puyat": ["Vito Cruz", "Libertad"],
     "Libertad": ["Gil Puyat", "EDSA"],
     "EDSA": ["Libertad", "Baclaran", "Taft Ave"],
-    "Baclaran": ["EDSA"],
+    "Baclaran": ["EDSA", "Redemptorist–Aseana"],
+    "Redemptorist–Aseana": ["Baclaran", "MIA Road"],
+    "MIA Road": ["Redemptorist–Aseana", "PITX"],
+    "PITX": ["MIA Road", "Ninoy Aquino Avenue"],
+    "Ninoy Aquino Avenue": ["PITX", "Dr. Santos"],
+    "Dr. Santos": ["Ninoy Aquino Avenue"],
 
     # ===== LRT-2 =====
     "Recto": ["Doroteo Jose", "Legarda"],
