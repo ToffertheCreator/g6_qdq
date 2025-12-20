@@ -63,7 +63,6 @@ def selection_sort(arr):
     
     return steps
 
-
 def insertion_sort(arr):
     """Insertion sort with step-by-step tracking"""
     a = arr.copy()
@@ -97,7 +96,6 @@ def insertion_sort(arr):
     
     return steps
 
-
 def merge_sort(arr):
     """Merge sort with step-by-step tracking"""
     steps = []
@@ -117,7 +115,6 @@ def merge_sort(arr):
     a = arr.copy()
     merge_sort_helper(a, 0, len(a))
     return steps
-
 
 def merge(arr, left, right, start, comparisons, swaps, steps):
     """Merge helper for merge sort"""
@@ -171,7 +168,6 @@ def merge(arr, left, right, start, comparisons, swaps, steps):
     
     return result
 
-
 def quick_sort(arr):
     """Quick sort with step-by-step tracking"""
     steps = []
@@ -187,7 +183,6 @@ def quick_sort(arr):
     a = arr.copy()
     quick_sort_helper(a, 0, len(a) - 1)
     return steps
-
 
 def partition(arr, low, high, comparisons, swaps, steps):
     """Partition helper for quick sort"""

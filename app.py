@@ -425,7 +425,6 @@ def api_sort():
         if not arr:
             return jsonify({'error': 'Array is required'}), 400
         
-        # Call the appropriate sorting function
         if algorithm == 'bubble':
             steps = sorting.bubble_sort(arr)
         elif algorithm == 'selection':
