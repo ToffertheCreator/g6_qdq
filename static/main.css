@@ -603,6 +603,134 @@ html, body {
     }
 }
 
+
+/* ========================================
+    GRAPH PAGE
+======================================== */
+.io-row {
+    display: flex;
+    gap: clamp(5px, 1vw, 10px);
+    align-items: center;
+    flex-wrap: nowrap;
+    min-width: 0;
+    width: 100%;
+}
+
+.operation-field {
+    flex: 1;
+    min-width: clamp(100px, 20vw, 200px);
+    max-width: 100%;
+}
+
+.algo-select {
+    width: 50%;
+    height: clamp(32px, 5vw, 38px);
+    padding: clamp(4px, 1vw, 8px);
+    font-size: clamp(12px, 2vw, 16px);
+    border-radius: 4px;
+    border: none;
+    background: #222;
+    color: #fff;
+    min-width: 0;
+}
+
+.run-btn {
+    padding: clamp(6px, 1.5vw, 10px) clamp(10px, 2vw, 20px);
+    background-color: #fff;
+    color: #000;
+    border: 2px solid #fff;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    white-space: nowrap;
+    flex-shrink: 0;
+    font-size: clamp(10px, 1.5vw, 14px);
+    min-width: clamp(50px, 10vw, 80px);
+}
+
+.clear-btn {
+    padding: clamp(6px, 1.5vw, 10px) clamp(10px, 2vw, 20px);
+    background-color: #f44336;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    white-space: nowrap;
+    flex-shrink: 0;
+    font-size: clamp(10px, 1.5vw, 14px);
+    min-width: clamp(50px, 10vw, 80px);
+}
+
+/* --- Stats Row --- */
+.stats-row {
+    display: flex;
+    justify-content: space-around;
+    margin: clamp(10px, 2vw, 20px) 0 clamp(5px, 1vw, 10px) 0;
+    flex-wrap: nowrap;
+    gap: clamp(5px, 1vw, 10px);
+    overflow-x: auto;
+    font-size: clamp(10px, 1.5vw, 14px);
+}
+
+/* --- Bars Area --- */
+.bars-area {
+    width: 100%;
+    height: clamp(250px, 40vw, 350px);
+    border: 2px solid #fff;
+    margin: 0 auto;
+    display: flex;
+    align-items: flex-end;
+    background: #000;
+    min-height: 200px;
+}
+
+/* --- Number Input and Button Row --- */
+.number-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: nowrap;
+    width: 100%;
+    padding-top: 20px;
+    min-width: 0;
+}
+
+.number-label {
+    color: #fff;
+    min-width: fit-content;
+    margin-bottom: 0;
+    white-space: nowrap;
+    flex-shrink: 0;
+    font-size: 14px;
+}
+
+.number-input {
+    flex: 1;
+    min-width: 60px;
+    box-sizing: border-box;
+    height: 38px;
+    font-size: 16px;
+    background: #222;
+    color: #fff;
+    border-radius: 4px;
+    border: none;
+    padding: 8px;
+}
+
+.number-btn {
+    background-color: #fff;
+    color: #000;
+    border: 2px solid #fff;
+    border-radius: 4px;
+    font-weight: bold;
+    height: 38px;
+    font-size: 14px;
+    padding: 0 15px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
 /* ========================================
    CONTACT PAGE
 ======================================== */

@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<title>Sorting Algorithms</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+{% endblock %}
+
+{% block body %}
+<div class="works page-bg">
+    <div class="work-detail-section">
+        <h1>Sorting Algorithm Visualizer</h1>
+        <div class="io-box">
+            <form>
+                <div class="container io-row">
+                    <div class="operation-field">
+                        <select id="algo-select" name="operation" class="algo-select">
+                            <option value="bubble">Bubble Sort</option>
+                            <option value="selection">Selection Sort</option>
+                            <option value="insertion">Insertion Sort</option>
+                            <option value="merge">Merge Sort</option>
+                            <option value="quick">Quick Sort</option>
+                        </select>
+                    </div>
+                    <input type="button" id="run-btn" value="Run" class="run-btn">
+                    <button type="button" id="clear-btn" class="clear-btn">Clear</button>
+                </div>
+            </form>
+
+            <div id="stats" class="stats-row">
+                <div>time: <span id="stat-time">0</span>ms</div>
+                <div>comparison: <span id="stat-comp">0</span></div>
+                <div>swaps: <span id="stat-swaps">0</span></div>
+                <div>time complexity: <span id="stat-complexity">O(?)</span></div>
+            </div>
+
+            <div id="bars" class="bars-area"></div>
+
+            <div class="container number-row">
+                <label for="num-items" class="number-label">Number of Items</label>
+                <input id="num-items" type="number" min="5" max="100" value="30" class="number-input">
+                <input type="button" id="gen-btn" value="Generate Random Numbers" class="number-btn">
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- Visualization Only (No sorting logic) ---
+    const barsDiv = document.getElementById('bars');
+    const statTime = document.getElementById('stat-time');
+    const statComp = document.getElementById('stat-comp');
+    const statSwaps = document.getElementById('stat-swaps');
+    const statComplexity = document.getElementById('stat-complexity');
+    const algoSelect = document.getElementById('algo-select');
+    const runBtn = document.getElementById('run-btn');
+    const clearBtn = document.getElementById('clear-btn');
+    const genBtn = document.getElementById('gen-btn');
+    const numItemsInput = document.getElementById('num-items');
+
+    let arr = [];
+    let sorting = false;
+
+    function drawBars(a, active=[]) {
+        barsDiv.innerHTML = '';
+        let max = Math.max(...a, 1);
+        a.forEach((val, i) => {
+            let bar = document.createElement('div');
+            bar.className = 'bar' + (active.includes(i) ? ' active' : '');
+            bar.style.height = (val / max * 100) + '%';
+            bar.style.width = (100 / a.length) + '%';
+            bar.style.display = 'inline-block';
+            bar.style.verticalAlign = 'bottom';
+            bar.style.background = active.includes(i) ? 'red' : 'white';
+            bar.style.border = '1px solid #333';
+            bar.style.boxSizing = 'border-box';
+            barsDiv.appendChild(bar);
+        });
+    }
+
+    function generateArray(n) {
+        arr = Array.from({length: n}, () => Math.floor(Math.random() * 350) + 20);
+        drawBars(arr);
+    }
+
+    genBtn.onclick = () => generateArray(Number(numItemsInput.value));
+    numItemsInput.onchange = () => generateArray(Number(numItemsInput.value));
+    clearBtn.onclick = () => {
+        sorting = false;
+        arr = [];
+        barsDiv.innerHTML = '';
+        statTime.textContent = 0;
+        statComp.textContent = 0;
+        statSwaps.textContent = 0;
+        statComplexity.textContent = 'O(?)';
+    };
+
+    function getComplexity(algo) {
+        switch(algo) {
+            case 'bubble': return 'O(n²)';
+            case 'selection': return 'O(n²)';
+            case 'insertion': return 'O(n²)';
+            case 'merge': return 'O(n log n)';
+            case 'quick': return 'O(n log n)';
+            default: return '?';
+        }
+    }
+
+    runBtn.onclick = async () => {
+        if (!arr.length) {
+            alert('Please generate an array first');
+            return;
+        }
+        
+        runBtn.disabled = true;
+        runBtn.value = 'Sorting...';
+        
+        let algo = algoSelect.value;
+        statComplexity.textContent = getComplexity(algo);
+        let t0 = performance.now();
+        
+        try {
+            // Call Python API to get sorting steps
+            const response = await fetch('/api/sort', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    arr: arr,
+                    algorithm: algo
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error('Sorting failed');
+            }
+            
+            const data = await response.json();
+            const steps = data.steps;
+            
+            // Visualize the steps
+            sorting = true;
+            for (let step of steps) {
+                if (!sorting) break;
+                drawBars(step.arr, step.active);
+                statComp.textContent = step.comp;
+                statSwaps.textContent = step.swaps;
+                statTime.textContent = Math.round(performance.now() - t0);
+                await new Promise(r => setTimeout(r, 20));
+            }
+            
+            statTime.textContent = Math.round(performance.now() - t0);
+            sorting = false;
+            
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred during sorting');
+        } finally {
+            runBtn.disabled = false;
+            runBtn.value = 'Run';
+        }
+    };
+
+    window.onload = () => generateArray(Number(numItemsInput.value));
+</script>
+{% endblock %}

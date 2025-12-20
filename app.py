@@ -1,5 +1,5 @@
-from flask import Flask, request, render_template, session
-from algorithms import deque, queue, binarytree, bst, graph_bfs
+from flask import Flask, request, render_template, session, jsonify
+from algorithms import deque, queue, binarytree, bst, graph_bfs, sorting
 import os
 
 app = Flask(__name__)
@@ -387,23 +387,58 @@ def bst_route():
 
 @app.route('/graph', methods=['GET', 'POST'])
 def graph_route():
-    stations = sorted(graph_bfs.graph.keys())
-    path = None
-    message = ""
+    # stations = sorted(graph_bfs.graph.keys())
+    # path = None
+    # message = ""
 
-    if request.method == 'POST':
-        start = request.form.get('start')
-        goal = request.form.get('goal')
-        if not start or not goal:
-            message = "Please select both start and goal stations."
+    # if request.method == 'POST':
+    #     start = request.form.get('start')
+    #     goal = request.form.get('goal')
+    #     if not start or not goal:
+    #         message = "Please select both start and goal stations."
+    #     else:
+    #         path = graph_bfs.bfs_shortest_path(start, goal)
+    #         if path:
+    #             message = f"Shortest path: {' -> '.join(path)}"
+    #         else:
+    #             message = "No path found between the selected stations."
+
+    # return render_template('graph.html', stations=stations, path=path, message=message)
+    pass
+
+@app.route('/sort', methods=['GET', 'POST'])
+def sort_route():
+    return render_template('sorting.html')
+
+@app.route('/api/sort', methods=['POST'])
+def api_sort():
+    """API endpoint to perform sorting and return steps"""
+    try:
+        data = request.get_json()
+        arr = data.get('arr', [])
+        algorithm = data.get('algorithm', 'bubble')
+        
+        if not arr:
+            return jsonify({'error': 'Array is required'}), 400
+        
+        # Call the appropriate sorting function
+        if algorithm == 'bubble':
+            steps = sorting.bubble_sort(arr)
+        elif algorithm == 'selection':
+            steps = sorting.selection_sort(arr)
+        elif algorithm == 'insertion':
+            steps = sorting.insertion_sort(arr)
+        elif algorithm == 'merge':
+            steps = sorting.merge_sort(arr)
+        elif algorithm == 'quick':
+            steps = sorting.quick_sort(arr)
         else:
-            path = graph_bfs.bfs_shortest_path(start, goal)
-            if path:
-                message = f"Shortest path: {' -> '.join(path)}"
-            else:
-                message = "No path found between the selected stations."
-
-    return render_template('graph.html', stations=stations, path=path, message=message)
+            return jsonify({'error': 'Invalid algorithm'}), 400
+        
+        return jsonify({'steps': steps})
+    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/contact')
 def contact():
