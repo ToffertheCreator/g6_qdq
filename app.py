@@ -387,24 +387,28 @@ def bst_route():
 
 @app.route('/graph', methods=['GET', 'POST'])
 def graph_route():
-    # stations = sorted(graph_bfs.graph.keys())
-    # path = None
-    # message = ""
+    return render_template('graph.html')
 
-    # if request.method == 'POST':
-    #     start = request.form.get('start')
-    #     goal = request.form.get('goal')
-    #     if not start or not goal:
-    #         message = "Please select both start and goal stations."
-    #     else:
-    #         path = graph_bfs.bfs_shortest_path(start, goal)
-    #         if path:
-    #             message = f"Shortest path: {' -> '.join(path)}"
-    #         else:
-    #             message = "No path found between the selected stations."
-
-    # return render_template('graph.html', stations=stations, path=path, message=message)
-    pass
+@app.route('/api/find-path', methods=['POST'])
+def api_find_path():
+    """API endpoint to find shortest path using BFS"""
+    try:
+        data = request.get_json()
+        start = data.get('start')
+        goal = data.get('goal')
+        
+        if not start or not goal:
+            return jsonify({'error': 'Start and goal are required'}), 400
+        
+        path = graph_bfs.bfs_shortest_path(start, goal)
+        
+        if path:
+            return jsonify({'path': path})
+        else:
+            return jsonify({'path': []})
+    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/sort', methods=['GET', 'POST'])
 def sort_route():

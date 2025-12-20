@@ -605,7 +605,184 @@ html, body {
 
 
 /* ========================================
-    GRAPH PAGE
+   GRAPH PAGE
+======================================== */
+:root {
+    --lrt1-color: #FFCD00;
+    --lrt2-color: #5B2D82;
+    --mrt3-color: #0038A8;
+}
+
+.map-header {
+    background: #000;
+    padding: clamp(0.75rem, 2vw, 1.5rem) clamp(1rem, 3vw, 2rem);
+    border-bottom: 2px solid #fff;
+    z-index: 10;
+    color: #fff;
+    margin-top: 80px;
+}
+
+.map-header h1 { 
+    margin: 0 0 0.5rem 0; 
+    font-size: clamp(1.3rem, 3vw, 2rem);
+    font-weight: 800; 
+    letter-spacing: -0.025em; 
+    color: #fff;
+}
+
+.top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: clamp(0.75rem, 2vw, 2rem);
+    flex-wrap: wrap;
+}
+
+.legend { 
+    display: flex; 
+    gap: clamp(0.75rem, 2vw, 1.5rem);
+    margin-top: 10px;
+    flex-wrap: wrap;
+}
+
+.legend-item { 
+    display: flex; 
+    align-items: center; 
+    gap: 0.5rem; 
+    font-size: clamp(0.8rem, 1.5vw, 1rem);
+    font-weight: 600;
+    color: #fff;
+}
+
+.legend-pill { 
+    width: clamp(10px, 1.5vw, 12px);
+    height: clamp(10px, 1.5vw, 12px);
+    border-radius: 50%; 
+}
+
+.path-panel {
+    flex-grow: 1;
+    background: #151515;
+    padding: clamp(0.5rem, 1vw, 0.75rem) clamp(0.75rem, 1.5vw, 1rem);
+    border-radius: 8px;
+    border: 2px solid #fff;
+    font-size: clamp(0.85rem, 1.5vw, 1.05rem);
+    min-height: 1.2rem;
+    display: flex;
+    align-items: center;
+    color: #fff;
+    min-width: 0;
+}
+
+.actions { 
+    display: flex; 
+    gap: clamp(0.5rem, 1vw, 0.75rem);
+    flex-shrink: 0;
+}
+
+.btn-primary { 
+    padding: clamp(8px, 1.5vw, 10px) clamp(15px, 3vw, 30px);
+    border: 2px solid #fff;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: clamp(12px, 2vw, 16px);
+    cursor: pointer;
+    transition: all 0.2s;
+    background: #fff; 
+    color: #000;
+    white-space: nowrap;
+}
+
+.btn-primary:hover { 
+    background: #ddd;
+    transform: scale(1.05);
+}
+
+.btn-secondary { 
+    padding: clamp(8px, 1.5vw, 10px) clamp(15px, 3vw, 30px);
+    border: none;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: clamp(12px, 2vw, 16px);
+    cursor: pointer;
+    transition: all 0.2s;
+    background: #f44336; 
+    color: #fff;
+    white-space: nowrap;
+}
+
+.btn-secondary:hover { 
+    background: #d32f2f;
+    transform: scale(1.05);
+}
+
+.map-viewport {
+    flex-grow: 1;
+    overflow: auto;
+    background: #000;
+    position: relative;
+    padding: clamp(10px, 3vw, 40px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: calc(100vh - clamp(150px, 20vh, 200px));
+}
+
+#map-canvas {
+    display: block;
+    background-color: #000;
+    border: 2px solid #fff;
+    border-radius: 8px;
+    cursor: grab;
+    max-width: 100%;
+    height: auto;
+    width: clamp(300px, 90vw, 1200px);
+}
+
+#map-canvas:active {
+    cursor: grabbing;
+}
+
+.station-tooltip {
+    position: fixed;
+    background: #151515;
+    color: white;
+    padding: clamp(6px, 1vw, 8px) clamp(10px, 2vw, 14px);
+    border-radius: 6px;
+    border: 2px solid #fff;
+    font-size: clamp(0.7rem, 1.5vw, 0.85rem);
+    font-weight: 600;
+    pointer-events: none;
+    display: none;
+    z-index: 1000;
+}
+
+.dropdown-container {
+    display: flex;
+    gap: clamp(0.5rem, 1vw, 0.75rem);
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.dropdown-container select {
+    padding: clamp(8px, 1.5vw, 10px) clamp(10px, 2vw, 14px);
+    border-radius: 4px;
+    background: #151515;
+    color: #fff;
+    border: 2px solid #fff;
+    font-size: clamp(12px, 2vw, 16px);
+    min-width: clamp(120px, 20vw, 170px);
+    font-weight: bold;
+}
+
+.dropdown-container select option {
+    background: #151515;
+    color: #fff;
+}
+
+
+/* ========================================
+    SORTING PAGE
 ======================================== */
 .io-row {
     display: flex;
