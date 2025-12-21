@@ -188,6 +188,91 @@
             ctx.restore();
         }
 
+        var lastTouchDistance = 0;
+        var lastTouchCenter = { x: 0, y: 0 };
+
+        // Touch events (mobile)
+        canvas.addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            
+            if (e.touches.length === 1) {
+                // Single touch - pan
+                isDragging = true;
+                var rect = canvas.getBoundingClientRect();
+                dragStart = { 
+                    x: e.touches[0].clientX - rect.left, 
+                    y: e.touches[0].clientY - rect.top 
+                };
+            } else if (e.touches.length === 2) {
+                // Two fingers - prepare for pinch zoom
+                isDragging = false;
+                var touch1 = e.touches[0];
+                var touch2 = e.touches[1];
+                lastTouchDistance = Math.hypot(
+                    touch2.clientX - touch1.clientX,
+                    touch2.clientY - touch1.clientY
+                );
+                lastTouchCenter = {
+                    x: (touch1.clientX + touch2.clientX) / 2,
+                    y: (touch1.clientY + touch2.clientY) / 2
+                };
+            }
+        }, { passive: false });
+
+        canvas.addEventListener('touchmove', function(e) {
+            e.preventDefault();
+            
+            if (e.touches.length === 1 && isDragging) {
+                // Single touch - pan
+                var rect = canvas.getBoundingClientRect();
+                var currentX = e.touches[0].clientX - rect.left;
+                var currentY = e.touches[0].clientY - rect.top;
+                
+                var deltaX = (currentX - dragStart.x) / zoom;
+                var deltaY = (currentY - dragStart.y) / zoom;
+                panX += deltaX;
+                panY += deltaY;
+                dragStart = { x: currentX, y: currentY };
+                redraw();
+            } else if (e.touches.length === 2) {
+                // Two fingers - pinch zoom
+                var touch1 = e.touches[0];
+                var touch2 = e.touches[1];
+                
+                var currentDistance = Math.hypot(
+                    touch2.clientX - touch1.clientX,
+                    touch2.clientY - touch1.clientY
+                );
+                
+                if (lastTouchDistance > 0) {
+                    var scale = currentDistance / lastTouchDistance;
+                    var newZoom = zoom * scale;
+                    zoom = Math.max(0.5, Math.min(newZoom, 3));
+                    redraw();
+                }
+                
+                lastTouchDistance = currentDistance;
+            }
+        }, { passive: false });
+
+        canvas.addEventListener('touchend', function(e) {
+            e.preventDefault();
+            
+            if (e.touches.length === 0) {
+                isDragging = false;
+                lastTouchDistance = 0;
+            } else if (e.touches.length === 1) {
+                // Continue panning with remaining finger
+                var rect = canvas.getBoundingClientRect();
+                dragStart = { 
+                    x: e.touches[0].clientX - rect.left, 
+                    y: e.touches[0].clientY - rect.top 
+                };
+                isDragging = true;
+                lastTouchDistance = 0;
+            }
+        }, { passive: false });
+
         canvas.addEventListener('wheel', function(e) {
             e.preventDefault();
             var zoomSpeed = 0.1;
