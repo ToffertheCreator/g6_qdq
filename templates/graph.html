@@ -163,54 +163,6 @@
         drawMap();
     });
 
-    function buildAdjacencyList() {
-        const adj = {};
-        stationData.forEach(s => adj[s.name] = new Set());
-        
-        const connect = (lineArr) => {
-            for(let i=0; i<lineArr.length-1; i++) {
-                adj[lineArr[i]].add(lineArr[i+1]);
-                adj[lineArr[i+1]].add(lineArr[i]);
-            }
-        };
-
-        connect(stationData.filter(s => s.line === 'MRT-3').map(s => s.name));
-        connect(stationData.filter(s => s.line === 'LRT-1').map(s => s.name));
-        connect(stationData.filter(s => s.line === 'LRT-2').map(s => s.name));
-
-        const walkTransfers = [
-            ['Recto', 'Doroteo Jose'], 
-            ['Cubao MRT', 'Cubao LRT']
-        ];
-        walkTransfers.forEach(([a, b]) => {
-            adj[a].add(b);
-            adj[b].add(a);
-        });
-
-        return adj;
-    }
-
-    function findShortestPath(start, end) {
-        if (start === end) return [start];
-        const adj = buildAdjacencyList();
-        const queue = [[start]];
-        const visited = new Set([start]);
-
-        while(queue.length > 0) {
-            const path = queue.shift();
-            const node = path[path.length - 1];
-            if(node === end) return path;
-
-            for(const neighbor of adj[node]) {
-                if(!visited.has(neighbor)) {
-                    visited.add(neighbor);
-                    queue.push([...path, neighbor]);
-                }
-            }
-        }
-        return [];
-    }
-
     function drawMap() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.save();
@@ -360,6 +312,105 @@
         
         ctx.restore();
     }
+
+    // Touch support variables
+    let lastTouchDistance = 0;
+    let lastTouchCenter = { x: 0, y: 0 };
+
+    // Touch start
+    canvas.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        
+        if (e.touches.length === 1) {
+            // Single touch - pan
+            isDragging = true;
+            dragStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        } else if (e.touches.length === 2) {
+            // Two touches - zoom
+            isDragging = false;
+            const touch1 = e.touches[0];
+            const touch2 = e.touches[1];
+            lastTouchDistance = Math.sqrt(
+                Math.pow(touch2.clientX - touch1.clientX, 2) +
+                Math.pow(touch2.clientY - touch1.clientY, 2)
+            );
+            lastTouchCenter = {
+                x: (touch1.clientX + touch2.clientX) / 2,
+                y: (touch1.clientY + touch2.clientY) / 2
+            };
+        }
+    }, { passive: false });
+
+    // Touch move
+    canvas.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        
+        if (e.touches.length === 1 && isDragging) {
+            // Single touch - pan
+            const touch = e.touches[0];
+            const deltaX = touch.clientX - dragStart.x;
+            const deltaY = touch.clientY - dragStart.y;
+            panX += deltaX;
+            panY += deltaY;
+            dragStart = { x: touch.clientX, y: touch.clientY };
+            drawMap();
+        } else if (e.touches.length === 2) {
+            // Two touches - pinch zoom
+            const touch1 = e.touches[0];
+            const touch2 = e.touches[1];
+            const distance = Math.sqrt(
+                Math.pow(touch2.clientX - touch1.clientX, 2) +
+                Math.pow(touch2.clientY - touch1.clientY, 2)
+            );
+            
+            if (lastTouchDistance > 0) {
+                const zoomChange = (distance - lastTouchDistance) * 0.01;
+                const newZoom = zoom + zoomChange;
+                zoom = Math.max(0.5, Math.min(newZoom, 3));
+                drawMap();
+            }
+            
+            lastTouchDistance = distance;
+        }
+    }, { passive: false });
+
+    // Touch end
+    canvas.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        
+        if (e.touches.length === 0) {
+            isDragging = false;
+            lastTouchDistance = 0;
+            
+            // Handle tap for station selection
+            if (e.changedTouches.length === 1) {
+                const touch = e.changedTouches[0];
+                const rect = canvas.getBoundingClientRect();
+                const touchX = touch.clientX - rect.left;
+                const touchY = touch.clientY - rect.top;
+                const { x, y } = screenToWorld(touchX, touchY);
+                
+                const clicked = stationData.find(s => Math.sqrt((s.x - x)**2 + (s.y - y)**2) < 25);
+                
+                if (clicked) {
+                    if (!startStation || (startStation && goalStation)) {
+                        startStation = clicked; goalStation = null; highlightedPath = [];
+                        pathDisplay.innerHTML = `Departure: <b>${startStation.name}</b>. Now tap your destination.`;
+                        startSelect.value = startStation.name;
+                        endSelect.value = '';
+                    } else {
+                        goalStation = clicked;
+                        pathDisplay.innerHTML = `Selected: <b>${startStation.name}</b> to <b>${goalStation.name}</b>. Find route?`;
+                        endSelect.value = goalStation.name;
+                    }
+                    drawMap();
+                }
+            }
+        } else if (e.touches.length === 1) {
+            // One finger remaining, reset drag
+            dragStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        }
+    }, { passive: false });
 
     // Mouse wheel zoom
     canvas.addEventListener('wheel', (e) => {
